@@ -11,7 +11,7 @@ class Kernel
     public function run(){
         echo 'WP Converter is ready.'."\n";
 
-        Kernel::$env = (new EnvParser("../.env"))->parse();
+        Kernel::$env = (new EnvParser(".env"))->parse();
 
         $src  = new DB(
                 Kernel::env('SRC_DB_HOST'),
@@ -27,9 +27,19 @@ class Kernel
                 Kernel::env('DST_DB_USER'),
                 Kernel::env('DST_DB_PASS'),
             );
+
+        Kernel::dd($src, $dest);
+
     }
 
     static function env($key, $default = null){
         return Kernel::$env[$key] ?? $default;
     }
+
+    static function dd()
+    {
+        foreach (func_get_args() as $arg) var_dump($arg);
+        die();
+    }
+
 }
