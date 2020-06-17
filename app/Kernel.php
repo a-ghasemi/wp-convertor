@@ -31,7 +31,7 @@ class Kernel
         $src->connect();
         $dest->connect();
 
-        Kernel::dd($src->error, $dest->error);
+        Kernel::dd($src->state, $dest->state);
 
     }
 
