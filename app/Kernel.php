@@ -7,20 +7,21 @@ namespace App;
 class Kernel
 {
     static $env;
+    private $src,$dest;
 
     public function run(){
         echo 'WP Converter is ready.'."\n";
 
         Kernel::$env = (new EnvParser(".env"))->parse();
 
-        $src  = new DB(
+        $this->src  = new DB(
             Kernel::env('SRC_DB_HOST'),
             Kernel::env('SRC_DB_PORT'),
             Kernel::env('SRC_DB_USER'),
             Kernel::env('SRC_DB_PASS'),
             Kernel::env('SRC_DB_NAME')
             );
-        $dest  = new DB(
+        $this->dest  = new DB(
             Kernel::env('DST_DB_HOST'),
             Kernel::env('DST_DB_PORT'),
             Kernel::env('DST_DB_USER'),
@@ -28,11 +29,17 @@ class Kernel
             Kernel::env('DST_DB_NAME')
             );
 
-        $src->connect();
-        $dest->connect();
+        $this->src->connect();
+        if($this->src->error){
+            die("Source Database Connection Failed!");
+        }
+        $this->dest->connect();
+        if($this->dest->error){
+            die("Destination Database Connection Failed!");
+        }
 
-        Kernel::dd($src->state, $dest->state);
-
+        $this->convert_products();
+        $this->convert_articles();
     }
 
     static function env($key, $default = null){
@@ -45,4 +52,27 @@ class Kernel
         die();
     }
 
+    function convert_products(){
+        $items = $this->get_products();
+        foreach($items as $item){
+            echo $item;
+        }
+    }
+
+    function convert_articles(){
+        $items = $this->get_articles();
+        foreach($items as $item){
+            echo $item;
+        }
+    }
+
+    function get_products(){
+        $item = [1,2,3];
+        yield $item;
+    }
+
+    function get_articles(){
+        $item = [4,5,6];
+        yield $item;
+    }
 }
