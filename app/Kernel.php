@@ -55,14 +55,14 @@ class Kernel
     function convert_products(){
         $items = $this->get_products();
         foreach($items as $item){
-            echo $item;
+            echo $item."\n";
         }
     }
 
     function convert_articles(){
         $items = $this->get_articles();
         foreach($items as $item){
-            echo $item;
+            echo $item."\n";
         }
     }
 
