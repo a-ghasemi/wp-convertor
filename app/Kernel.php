@@ -28,7 +28,10 @@ class Kernel
                 Kernel::env('DST_DB_PASS')
             );
 
-        Kernel::dd($src, $dest);
+        $src->connect();
+        $dest->connect();
+
+        Kernel::dd($src->state, $dest->state);
 
     }
 
