@@ -67,12 +67,16 @@ class Kernel
     }
 
     function get_products(){
-        $item = [1,2,3];
-        yield $item;
+        $items = [1,2,3];
+        foreach($items as $item){
+            yield $item;
+        }
     }
 
     function get_articles(){
-        $item = [4,5,6];
-        yield $item;
+        $items = [4,5,6];
+        foreach($items as $item){
+            yield $item;
+        }
     }
 }
