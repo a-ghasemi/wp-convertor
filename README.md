@@ -1,4 +1,4 @@
-# Wordpress Convertor
+# Wordpress Converter
 Under development ...
 
 ### Documentation
