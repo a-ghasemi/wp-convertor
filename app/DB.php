@@ -33,7 +33,7 @@ class DB
     }
 
     public function connect(){
-        $this->connection = new \mysqli($this->server_name, $this->username, $this->password);
+        $this->connection = new \mysqli($this->server_name, $this->username, $this->password, $this->db_name);
 
         if ($this->connection->connect_error) {
             $this->error = $this->connection->connect_error;
@@ -87,6 +87,21 @@ class DB
         }
 
         return true;
+    }
+
+    public function select($query){
+//        $query = "SELECT id, firstname, lastname FROM MyGuests";
+        $result = $this->connection->query($query);
+
+        if ($result->num_rows > 0) {
+            // output data of each row
+            while($row = $result->fetch_assoc()) {
+                yield $row;
+            }
+        }
+        else {
+            return null;
+        }
     }
 
 }

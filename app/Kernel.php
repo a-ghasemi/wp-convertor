@@ -67,14 +67,20 @@ class Kernel
     }
 
     function get_products(){
-        $items = [1,2,3];
+        $items = $this->src->select(
+            "select * from " . Kernel::env('SRC_DB_PREFIX') . "posts " .
+            "where post_status = 'publish' " .
+            "and post_type = 'product' " );
         foreach($items as $item){
             yield $item;
         }
     }
 
     function get_articles(){
-        $items = [4,5,6];
+        $items = $this->src->select(
+            "select * from " . Kernel::env('SRC_DB_PREFIX') . "posts " .
+            "where post_status = 'publish' " .
+            "and post_type = 'article' " );
         foreach($items as $item){
             yield $item;
         }
