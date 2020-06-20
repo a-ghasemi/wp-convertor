@@ -104,4 +104,17 @@ class DB
         }
     }
 
+    public function select_one($query){
+        $result = $this->connection->query($query);
+
+        if ($result->num_rows > 0) {
+            if($row = $result->fetch_assoc()) {
+                return $row;
+            }
+        }
+        else {
+            return null;
+        }
+    }
+
 }

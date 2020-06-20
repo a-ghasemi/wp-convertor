@@ -86,7 +86,7 @@ class Kernel
     }
 
     function get_meta($post_id,$meta_key){
-        $meta = $this->src->select(
+        $meta = $this->src->select_one(
             "select meta_value from " . Kernel::env('SRC_DB_PREFIX') . "postmeta " .
             "where post_id = '$post_id' " .
             "and meta_key = '$meta_key' " );
