@@ -65,7 +65,7 @@ class Kernel
                 'product_key_features' => $this->get_meta($post_id,'product_key_features'),
                 '_yoast_wpseo_metadesc' => $this->get_meta($post_id,'_yoast_wpseo_metadesc'),
             ];
-            echo $rec."\n";
+            print_r($rec)."\n";
         }
     }
 
