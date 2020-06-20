@@ -89,6 +89,13 @@ class DB
         return true;
     }
 
+    public function insert($query){
+//        INSERT INTO MyGuests (firstname, lastname, email)
+//        VALUES ('John', 'Doe', 'john@example.com')
+
+        return $this->connection->query($query);
+    }
+
     public function select($query){
 //        $query = "SELECT id, firstname, lastname FROM MyGuests";
         $result = $this->connection->query($query);
