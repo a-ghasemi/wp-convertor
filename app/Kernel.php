@@ -62,7 +62,10 @@ class Kernel
         foreach ($items as $item) {
             $x++;
             if ($x >= 2) break;
+
             $post_id = $item['ID'];
+            $img_item = $this->get_image($post_id);
+
 
             $type = 'product';
             $new_post = [
@@ -82,7 +85,7 @@ class Kernel
                 //                'post_content' => '',
                 //                'post_title' => '',
                 //                'post_excerpt' => '',
-                'post_status'           => ($type == 'product' ? 'publish' : 'inherit'),
+                'post_status'           => 'publish' ,
                 'comment_status'        => 'open',
                 'ping_status'           => 'closed',
                 'post_password'         => '',
@@ -92,52 +95,47 @@ class Kernel
                 'post_modified'         => $item['post_modified'],
                 'post_modified_gmt'     => $item['post_modified_gmt'],
                 'post_content_filtered' => '',
-                'post_parent'           => '0',
-                'guid'                  => $item['guid'],
+                'post_parent'           => 0,
+                'guid'                  => $this->ch_domain($item['guid']),
                 'menu_order'            => 0,
-                'post_type'             => ($type == 'product' ? 'product' : 'attachment'),
-                'post_mime_type'        => ($type == 'product' ? '' : $item['post_mime_type']),
+                'post_type'             => 'product',
+                'post_mime_type'        => '',
                 'comment_count'         => 0,
             ];
-            $new_post_A = array_merge($new_post, $common_details);
+            $new_post = array_merge($new_post, $common_details);
 
 
-            $type = 'image';
-
-//                'guid' => $this->get_image($post_id),// insert as new post, and change domain name
 //                '_wp_attachment_image_alt' => $this->get_meta($post_id,'_wp_attachment_image_alt'),
 
-            $common_details = [
+            $common_details_img = [
                 //                'ID', // autoincremental
                 'post_author'           => 1,
-                'post_date'             => $item['post_date'],
-                'post_date_gmt'         => $item['post_date_gmt'],
-                //                'post_content' => '',
-                //                'post_title' => '',
-                //                'post_excerpt' => '',
-                'post_status'           => ($type == 'product' ? 'publish' : 'inherit'),
+                'post_date'             => $img_item['post_date'],
+                'post_date_gmt'         => $img_item['post_date_gmt'],
+                'post_content' => '',
+                'post_title' => strtoupper($item['post_title']),
+                'post_excerpt' => '',
+                'post_status'           => 'inherit',
                 'comment_status'        => 'open',
                 'ping_status'           => 'closed',
                 'post_password'         => '',
-                //                'post_name' => '',
+                'post_name'             => $item['post_title'],
                 'to_ping'               => '',
                 'pinged'                => '',
-                'post_modified'         => $item['post_modified'],
-                'post_modified_gmt'     => $item['post_modified_gmt'],
+                'post_modified'         => $img_item['post_modified'],
+                'post_modified_gmt'     => $img_item['post_modified_gmt'],
                 'post_content_filtered' => '',
-                'post_parent'           => '0',
-                'guid'                  => $item['guid'],
+                'post_parent'           => $post_id,
+                'guid'                  => $this->ch_domain($img_item['guid']),
                 'menu_order'            => 0,
-                'post_type'             => ($type == 'product' ? 'product' : 'attachment'),
-                'post_mime_type'        => ($type == 'product' ? '' : $item['post_mime_type']),
+                'post_type'             => 'attachment',
+                'post_mime_type'        => $img_item['post_mime_type'],
                 'comment_count'         => 0,
             ];
-            $new_post_B = array_merge($new_post , $common_details);
-            $new_post_B['guid'] = $this->get_image($post_id);
 
             $this->dest->begin_transaction();
-            $a = $this->insert_post($new_post_A);
-            $b = $this->insert_post($new_post_B);
+            $a = $this->insert_post($new_post);
+            $b = $this->insert_post($common_details_img);
             if($a && $b){
                 echo "$post_id converted\n";
                 $this->dest->commit();
@@ -180,13 +178,13 @@ class Kernel
 
     function get_image($post_id)
     {
-        $meta = $this->src->select_one(
+        $img = $this->src->select_one(
             "select * from " . Kernel::env('SRC_DB_PREFIX') . "posts " .
             "where post_parent = '$post_id' " .
             "and post_type = 'attachment' " .
             "ORDER BY `post_date` ");
 
-        return $meta['meta_value'] ?? null;
+        return $img ?? null;
 
     }
 
@@ -210,5 +208,12 @@ class Kernel
             " (`$keys`) " .
             " ('$values') "
         );
+    }
+
+    function ch_domain($inp){
+        $out = str_replace('http://','https://',$inp);
+        $out = str_replace('https://miracontrol.ir/','https://miracontroller.ir/',$out);
+
+        return $out;
     }
 }
