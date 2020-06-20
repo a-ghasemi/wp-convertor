@@ -54,10 +54,18 @@ class Kernel
 
     function convert_products(){
         $items = $this->get_products();
-        print_r($items[0]);
-//        foreach($items as $item){
-//            echo $item."\n";
-//        }
+
+        $x = 0;
+        foreach($items as $item){
+            $x++;
+            if($x >= 2) break;
+            $post_id = $item['ID'];
+            $rec = [
+                'old_post_id' => $post_id,
+                '_yoast_wpseo_metadesc' => $this->get_meta($post_id,'_yoast_wpseo_metadesc'),
+            ];
+            echo $rec."\n";
+        }
     }
 
     function convert_articles(){
@@ -75,6 +83,16 @@ class Kernel
         foreach($items as $item){
             yield $item;
         }
+    }
+
+    function get_meta($post_id,$meta_key){
+        $meta = $this->src->select(
+            "select meta_value from " . Kernel::env('SRC_DB_PREFIX') . "postmeta " .
+            "where post_id = '$post_id' " .
+            "and meta_key = '$meta_key' " );
+
+        return $meta[0] ?? null;
+
     }
 
     function get_articles(){
