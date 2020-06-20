@@ -54,9 +54,10 @@ class Kernel
 
     function convert_products(){
         $items = $this->get_products();
-        foreach($items as $item){
-            echo $item."\n";
-        }
+        print_r($items[0]);
+//        foreach($items as $item){
+//            echo $item."\n";
+//        }
     }
 
     function convert_articles(){
