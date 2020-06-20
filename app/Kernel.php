@@ -92,7 +92,7 @@ class Kernel
             "where post_id = '$post_id' " .
             "and meta_key = '$meta_key' " );
 
-        return $meta ?? null;
+        return $meta['meta_value'] ?? null;
 
     }
 
