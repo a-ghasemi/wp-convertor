@@ -96,13 +96,13 @@ class DB
             $this->state = 'error';
             return false;
         }
-        return true;
+        return $this->connection->insert_id;
     }
 
     public function select($query){
         $result = $this->connection->query($query);
 
-        if ($result->num_rows > 0) {
+        if ($result && $result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
                 yield $row;
             }
@@ -110,6 +110,19 @@ class DB
         else {
             return null;
         }
+    }
+
+    public function select_all($query){
+        $result = $this->connection->query($query);
+
+
+        $ret = [];
+        if ($result && $result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $ret[] = $row;
+            }
+        }
+        return $ret;
     }
 
     public function execute($query){
@@ -124,7 +137,7 @@ class DB
     public function select_one($query){
         $result = $this->connection->query($query);
 
-        if ($result->num_rows > 0) {
+        if ($result && $result->num_rows > 0) {
             if($row = $result->fetch_assoc()) {
                 return $row;
             }
