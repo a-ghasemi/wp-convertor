@@ -7,7 +7,7 @@ namespace App;
 class Kernel
 {
     static $env;
-    private $src, $dest;
+    private $src, $dest, $main_db;
 
     public function run()
     {
@@ -15,6 +15,13 @@ class Kernel
 
         Kernel::$env = (new EnvParser(".env"))->parse();
 
+        $this->main_db = new DB(
+            Kernel::env('MAIN_DB_HOST'),
+            Kernel::env('MAIN_DB_PORT'),
+            Kernel::env('MAIN_DB_USER'),
+            Kernel::env('MAIN_DB_PASS'),
+            Kernel::env('MAIN_DB_NAME')
+        );
         $this->src = new DB(
             Kernel::env('SRC_DB_HOST'),
             Kernel::env('SRC_DB_PORT'),
@@ -30,6 +37,10 @@ class Kernel
             Kernel::env('DST_DB_NAME')
         );
 
+        $this->main_db->connect();
+        if ($this->main_db->error) {
+            die("Main Database Connection Failed!");
+        }
         $this->src->connect();
         if ($this->src->error) {
             die("Source Database Connection Failed!");
@@ -60,19 +71,20 @@ class Kernel
 
         $x = 0;
         foreach ($items as $item) {
+            $post_id = $item['ID'];
+
+            if( in_array($post_id , ['138','148']) )continue;
+
             $x++;
             if ($x >= 2) break;
 
-            $post_id = $item['ID'];
             $img_item = $this->get_image($post_id);
 
-
-            $type = 'product';
             $new_post = [
-                'old_post_id' => $post_id,
+//                'old_post_id' => $post_id,
 
                 'post_name'    => $this->get_meta($post_id, 'product_latin_name'),
-                'post_title'   => $item['post_title'],
+                'post_title'   => str_replace(" ","-",$item['post_title']),
                 'post_excerpt' => $this->get_meta($post_id, '_yoast_wpseo_metadesc'),//summary
                 'post_content' => $item['post_content'] . "<hr/>" . $this->get_meta($post_id, 'product_key_features'),
 //                'product_technical_informations' => $this->get_meta($post_id,'product_technical_informations'), //useless
@@ -85,7 +97,7 @@ class Kernel
                 //                'post_content' => '',
                 //                'post_title' => '',
                 //                'post_excerpt' => '',
-                'post_status'           => 'publish' ,
+                'post_status'           => 'publish',
                 'comment_status'        => 'open',
                 'ping_status'           => 'closed',
                 'post_password'         => '',
@@ -104,7 +116,6 @@ class Kernel
             ];
             $new_post = array_merge($new_post, $common_details);
 
-
 //                '_wp_attachment_image_alt' => $this->get_meta($post_id,'_wp_attachment_image_alt'),
 
             $common_details_img = [
@@ -112,9 +123,9 @@ class Kernel
                 'post_author'           => 1,
                 'post_date'             => $img_item['post_date'],
                 'post_date_gmt'         => $img_item['post_date_gmt'],
-                'post_content' => '',
-                'post_title' => strtoupper($item['post_title']),
-                'post_excerpt' => '',
+                'post_content'          => '',
+                'post_title'            => strtoupper($item['post_title']),
+                'post_excerpt'          => '',
                 'post_status'           => 'inherit',
                 'comment_status'        => 'open',
                 'ping_status'           => 'closed',
@@ -133,15 +144,92 @@ class Kernel
                 'comment_count'         => 0,
             ];
 
+
+            $meta_keys = [
+                '_manage_stock',
+                '_tax_class',
+                '_tax_status',
+                'total_sales',
+                '_edit_last',
+                '_edit_lock',
+                '_thumbnail_id',
+                '_product_version',
+                'rank_math_internal_links_processed',
+                '_fusion',
+                '_wc_review_count',
+                '_wc_average_rating',
+                '_stock_status',
+                '_stock',
+                '_download_expiry',
+                '_backorders',
+                '_sold_individually',
+                '_virtual',
+                '_downloadable',
+                '_download_limit',
+                'rank_math_primary_product_cat',
+                'rank_math_seo_score',
+                'rank_math_robots',
+                'rank_math_advanced_robots',
+                'rank_math_dont_show_seo_score',
+                'rank_math_permalink',
+                'rank_math_twitter_card_type',
+                'rank_math_twitter_enable_image_overlay',
+                'rank_math_twitter_image_overlay',
+                'rank_math_twitter_use_facebook',
+                'rank_math_facebook_image_overlay',
+                'rank_math_facebook_enable_image_overlay',
+                'rank_math_rich_snippet',
+            ];
+
+            $meta_values = [
+                'rank_math_internal_links_processed' => '',
+                '_fusion' => '',
+                '_wc_review_count' => '0',
+                '_wc_average_rating' => '0',
+                '_stock_status' => 'instock',
+                '_stock' => '',
+                '_download_expiry' => '',
+                '_backorders' => '',
+                '_sold_individually' => '',
+                '_virtual' => '',
+                '_downloadable' => '',
+                '_download_limit' => '',
+                'rank_math_primary_product_cat' => '',
+                'rank_math_seo_score' => '',
+                'rank_math_robots' => '',
+                'rank_math_advanced_robots' => '',
+                'rank_math_dont_show_seo_score' => '',
+                'rank_math_permalink' => '',
+                'rank_math_twitter_card_type' => '',
+                'rank_math_twitter_enable_image_overlay' => '',
+                'rank_math_twitter_image_overlay' => '',
+                'rank_math_twitter_use_facebook' => '',
+                'rank_math_facebook_image_overlay' => '',
+                'rank_math_facebook_enable_image_overlay' => '',
+                'rank_math_rich_snippet' => '',
+            ];
+
+
+            $metas = [];
+            foreach($meta_keys as $key){
+                $metas[] = "(".implode(",",[
+                    'post_id' => $post_id,
+                    'meta_key' => $key,
+                    'meta_value' => $meta_values[$key],
+                ]).")";
+            }
+
             $this->dest->begin_transaction();
-            $a = $this->insert_post($new_post);
-            $b = $this->insert_post($common_details_img);
-            if($a && $b){
+            $a = $this->insert_into("posts", $new_post);
+            $b = $this->insert_into("posts", $common_details_img);
+            $c = $this->insert_into_bulk("postmeta", $meta_keys, $metas);
+            $c = true;
+            if ($a && $b && $c) {
                 echo "$post_id converted\n";
                 $this->dest->commit();
-            }
-            else{
+            } else {
                 echo "$post_id convertion failed ###########\n";
+                echo "ERROR: {$this->dest->error}\n";
                 $this->dest->rollback();
             }
         }
@@ -199,21 +287,49 @@ class Kernel
         }
     }
 
-    function insert_post($rec){
-        $keys = implode('`,`',array_keys($rec));
-        $values = implode('\',\'',array_values($rec));
+    function insert_into($table_name, $rec)
+    {
+        $keys = implode('`,`', array_keys($rec));
+        $values = implode('\',\'', array_values($rec));
 
-        return $this->dest->insert(
-            "insert into " . Kernel::env('SRC_DB_PREFIX') . "posts " .
+        $qry = "insert into " . Kernel::env('DST_DB_PREFIX') . "$table_name " .
             " (`$keys`) " .
-            " ('$values') "
-        );
+            "VALUES ('$values');";
+
+        return $this->dest->insert($qry);
     }
 
-    function ch_domain($inp){
-        $out = str_replace('http://','https://',$inp);
-        $out = str_replace('https://miracontrol.ir/','https://miracontroller.ir/',$out);
+    function insert_into_bulk($table_name, $keys, $values)
+    {
+        $keys = implode('`,`', $keys);
+        $values = implode(',', $values);
+
+        $qry = "insert into " . Kernel::env('DST_DB_PREFIX') . "$table_name " .
+            " (`$keys`) " .
+            "VALUES ('$values');";
+
+        return $this->dest->insert($qry);
+    }
+
+    function ch_domain($inp)
+    {
+        $out = str_replace('http://', 'https://', $inp);
+        $out = str_replace('https://miracontrol.ir/', 'https://miracontroller.ir/', $out);
+        $out = str_replace('https://behinnogen.ir/', 'https://miracontroller.ir/', $out);
 
         return $out;
+    }
+
+
+    function setup(){
+        $this->main_db->execute(
+            "CREATE TABLE posts ( ".
+            "post_id int, " .
+            "post_type varchar(100), " .
+            "status varchar(100), " .
+            "created_at timestamp, " .
+            "updated_at timestamp " .
+            ")"
+        );
     }
 }

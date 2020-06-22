@@ -54,8 +54,8 @@ class DB
         if($this->on_demand) return true;
 
         if (!$this->connection->commit()) {
-//            $this->error = $this->connection->connect_error;
-            $this->error = 'Transaction commit failed';
+            $this->error = $this->connection->error;
+//            $this->error = 'Transaction commit failed';
             $this->state = 'error';
             return false;
         }
@@ -67,8 +67,8 @@ class DB
         if($this->on_demand) return true;
 
         if (!$this->connection->begin_transaction()) {
-//            $this->error = $this->connection->connect_error;
-            $this->error = 'Begin Transaction failed';
+            $this->error = $this->connection->error;
+//            $this->error = 'Begin Transaction failed';
             $this->state = 'error';
             return false;
         }
@@ -80,8 +80,8 @@ class DB
         if($this->on_demand) return false;
 
         if (!$this->connection->rollback()) {
-//            $this->error = $this->connection->connect_error;
-            $this->error = 'Rollback Transaction failed';
+            $this->error = $this->connection->error;
+//            $this->error = 'Rollback Transaction failed';
             $this->state = 'error';
             return false;
         }
@@ -90,18 +90,19 @@ class DB
     }
 
     public function insert($query){
-//        INSERT INTO MyGuests (firstname, lastname, email)
-//        VALUES ('John', 'Doe', 'john@example.com')
-
-        return $this->connection->query($query);
+        if (!$this->connection->query($query)) {
+//        if ($this->connection->connect_error) {
+            $this->error = $this->connection->error;
+            $this->state = 'error';
+            return false;
+        }
+        return true;
     }
 
     public function select($query){
-//        $query = "SELECT id, firstname, lastname FROM MyGuests";
         $result = $this->connection->query($query);
 
         if ($result->num_rows > 0) {
-            // output data of each row
             while($row = $result->fetch_assoc()) {
                 yield $row;
             }
@@ -109,6 +110,15 @@ class DB
         else {
             return null;
         }
+    }
+
+    public function execute($query){
+        if (!$this->connection->query($query)) {
+            $this->error = $this->connection->error;
+            $this->state = 'error';
+            return false;
+        }
+        return true;
     }
 
     public function select_one($query){
